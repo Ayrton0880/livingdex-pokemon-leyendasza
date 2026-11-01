@@ -1,0 +1,718 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Livingdex Leyendas Z-A</title>
+<style>html{color-scheme:light}body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: cabecera compacta, pestañas de Pokédex, panel de caja 6x5 a la izquierda y ficha del Pokémon a la derecha (apilados en móvil). Tono: noche de Ciudad Luminalia, índigo con acento verde azulado. */
+:root{
+  --bg:#eef1f7; --surface:#ffffff; --slot:#f5f7fc; --ink:#12162b; --muted:#566080; --line:#d3d9ea;
+  --accent:#0a8f7a; --accent-ink:#ffffff; --caught:#d6f1ec; --shiny:#a87400; --alpha:#c2255c; --focus:#3b5bdb;
+  --display:"Bricolage Grotesque","Trebuchet MS",system-ui,sans-serif;
+  --body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1022; --surface:#161a35; --slot:#1c2142; --ink:#e9ecf9; --muted:#9aa2c6; --line:#2a3163;
+    --accent:#3fdcc0; --accent-ink:#06231e; --caught:#12433f; --shiny:#f5c542; --alpha:#ff7aa8; --focus:#8fa8ff; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1022; --surface:#161a35; --slot:#1c2142; --ink:#e9ecf9; --muted:#9aa2c6; --line:#2a3163;
+  --accent:#3fdcc0; --accent-ink:#06231e; --caught:#12433f; --shiny:#f5c542; --alpha:#ff7aa8; --focus:#8fa8ff; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;
+  padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:1080px;margin:0 auto;display:grid;gap:18px}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+header{display:flex;flex-wrap:wrap;align-items:end;justify-content:space-between;gap:10px 24px}
+.brand{display:flex;align-items:center;gap:14px;min-width:0}
+.mark{flex:none;width:52px;height:52px;border-radius:14px;background:var(--ink);color:var(--bg);display:grid;place-items:center;
+  font-family:var(--display);font-weight:800;font-size:19px;letter-spacing:-.02em;position:relative;overflow:hidden}
+.mark::after{content:"";position:absolute;left:0;right:0;bottom:0;height:6px;background:var(--accent)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(26px,5vw,36px);line-height:1.05;margin:0;letter-spacing:-.02em;text-wrap:balance}
+.sub{margin:4px 0 0;color:var(--muted);font-size:14px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tab{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px;cursor:pointer;text-align:left;display:grid;gap:2px;min-width:150px}
+.tab b{font-family:var(--display);font-size:16px;font-weight:600}
+.tab span{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab[aria-selected="true"] span{color:inherit;opacity:.8}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:6px}
+.stat .lab{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+.stat .lab b{font-family:var(--mono);font-size:13px;color:var(--ink);font-weight:500}
+.bar{height:6px;border-radius:99px;background:var(--slot);overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .25s}
+.stat.s .bar i{background:var(--shiny)} .stat.a .bar i{background:var(--alpha)} .stat.r .bar i{background:var(--muted)}
+.tools{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.modes{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.modes .lbl{font-size:13px;color:var(--muted);margin-right:2px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:6px 12px;cursor:pointer;font-size:13.5px;font-weight:500}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.search{flex:1 1 220px;min-width:0}
+.search input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 12px}
+.dim{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--muted)}
+.results{display:flex;flex-wrap:wrap;gap:6px}
+.results .chip{font-size:12.5px;padding:4px 10px}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
+.boxcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;display:grid;gap:12px;min-width:0}
+.boxhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.boxhead h2{margin:0;font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:-.01em}
+.boxhead small{display:block;font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:500}
+.nav{display:flex;gap:6px}
+.nav button{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--slot);cursor:pointer;font-size:18px;line-height:1}
+.nav button:disabled{opacity:.35;cursor:default}
+.boxes{display:flex;gap:6px;flex-wrap:wrap}
+.bx{min-width:34px;height:30px;border-radius:8px;border:1px solid var(--line);background:linear-gradient(to top,var(--caught) var(--f,0%),var(--slot) var(--f,0%));cursor:pointer;font-family:var(--mono);font-size:12.5px;padding:0 6px}
+.bx[aria-current="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);font-weight:500}
+.grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:clamp(4px,1vw,8px)}
+.slot{position:relative;aspect-ratio:1/1.08;border:1px solid var(--line);background:var(--slot);border-radius:10px;cursor:pointer;
+  display:grid;grid-template-rows:auto 1fr auto;padding:4px 3px 3px;min-width:0;text-align:center;overflow:hidden}
+.slot .no{font-family:var(--mono);font-size:clamp(8px,1.9vw,11px);color:var(--muted);text-align:left;padding-left:2px}
+.slot .nm{font-size:clamp(7.5px,2.2vw,12px);font-weight:600;line-height:1.1;align-self:center;overflow-wrap:anywhere;hyphens:auto}
+.slot .ind{display:flex;justify-content:center;gap:clamp(1px,.6vw,4px);height:clamp(9px,2.4vw,13px);align-items:center}
+.ind i{font-style:normal;font-size:clamp(7px,1.9vw,11px);line-height:1;color:var(--line);display:grid;place-items:center;min-width:clamp(7px,1.9vw,11px)}
+.ind .i-c::before{content:"";width:clamp(6px,1.6vw,9px);height:clamp(6px,1.6vw,9px);border-radius:50%;border:1.5px solid currentColor}
+.ind .i-r::before{content:"";width:clamp(5px,1.4vw,8px);height:clamp(5px,1.4vw,8px);border:1.5px solid currentColor;border-radius:2px}
+.slot.c{background:var(--caught);border-color:var(--accent)}
+.slot.c .i-c{color:var(--accent)} .slot.c .i-c::before{background:currentColor}
+.slot.r .i-r{color:var(--ink)} .slot.r .i-r::before{background:currentColor}
+.slot.s .i-s{color:var(--shiny)} .slot.a .i-a{color:var(--alpha);font-weight:700}
+.slot.x{border-style:dashed}
+.slot.sel{outline:3px solid var(--ink);outline-offset:1px;z-index:1}
+.slot.faded:not(.sel){opacity:.38}
+.slot.empty{visibility:hidden}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.detail{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:14px;position:sticky;top:12px;min-width:0}
+.dno{font-family:var(--mono);font-size:13px;color:var(--muted)}
+.dname{font-family:var(--display);font-size:30px;font-weight:800;letter-spacing:-.02em;line-height:1.05;margin:2px 0 0;overflow-wrap:anywhere}
+.tag{display:inline-block;font-size:12px;border:1px dashed var(--muted);border-radius:99px;padding:1px 9px;color:var(--muted);margin-top:6px}
+.where{border-left:3px solid var(--accent);padding:2px 0 2px 12px}
+.where h3{margin:0 0 2px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.where p{margin:0;font-size:15px}
+.toggles{display:grid;gap:8px}
+.tg{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;background:var(--slot)}
+.tg input{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.tg span{flex:1;min-width:0}
+.tg:has(input:checked){border-color:var(--accent);background:var(--caught)}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:8px 12px;cursor:pointer;font-size:13.5px;font-weight:500}
+.btn.pri{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.hint{margin:0;font-size:12.5px;color:var(--muted)}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+summary{cursor:pointer;font-weight:600}
+details textarea{width:100%;min-height:110px;margin-top:10px;border:1px solid var(--line);background:var(--slot);border-radius:10px;padding:10px;font-family:var(--mono);font-size:12px}
+.status{font-size:13px;color:var(--muted);min-height:1.2em}
+footer{font-size:12.5px;color:var(--muted);display:grid;gap:4px}
+@media (max-width:820px){
+  .main{grid-template-columns:minmax(0,1fr)}
+  .detail{position:static}
+  .tab{flex:1 1 140px}
+}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="mark" aria-hidden="true">Z-A</div>
+      <div>
+        <h1>Livingdex Z-A</h1>
+        <p class="sub">Pokémon Leyendas Z-A y el DLC Mega Dimension, en cajas de 6 × 5.</p>
+      </div>
+    </div>
+    <div class="tabs" role="tablist" aria-label="Pokédex" id="tabs"></div>
+  </header>
+
+  <section class="stats" id="stats" aria-label="Progreso"></section>
+
+  <section class="tools">
+    <div class="modes" id="modes" role="group" aria-label="Qué marca un toque en una casilla"></div>
+    <label class="dim"><input type="checkbox" id="dim"> Atenuar capturados</label>
+    <div class="search"><input id="q" type="search" placeholder="Buscar por nombre o número" autocomplete="off" aria-label="Buscar Pokémon"></div>
+  </section>
+  <div class="results" id="results"></div>
+
+  <section class="main">
+    <div class="boxcard">
+      <div class="boxhead">
+        <div><h2 id="boxtitle">Caja 1</h2><small id="boxrange"></small></div>
+        <div class="nav"><button id="prev" aria-label="Caja anterior">&#8249;</button><button id="next" aria-label="Caja siguiente">&#8250;</button></div>
+      </div>
+      <div class="boxes" id="boxes" aria-label="Cajas"></div>
+      <div class="grid" id="grid"></div>
+      <div class="legend">
+        <span><i class="lg" style="display:inline-block;width:9px;height:9px;border-radius:50%;border:1.5px solid var(--accent);background:var(--accent)"></i> Capturado</span>
+        <span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;border:1.5px solid var(--ink);background:var(--ink)"></i> Registrado en la Pokédex</span>
+        <span style="color:var(--shiny)">&#10022; Shiny</span>
+        <span style="color:var(--alpha)"><b>&alpha;</b> Alfa</span>
+        <span>Borde discontinuo: extra no necesario</span>
+      </div>
+    </div>
+
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </section>
+
+  <details>
+    <summary>Copia de seguridad</summary>
+    <p class="hint" style="margin-top:8px">Tu progreso se guarda solo en este navegador. Copia el texto para llevarlo a otro dispositivo o pégalo aquí para importarlo.</p>
+    <textarea id="bk" aria-label="Datos de la copia de seguridad" spellcheck="false"></textarea>
+    <div class="btnrow" style="margin-top:8px">
+      <button class="btn" id="bkexp">Generar copia</button>
+      <button class="btn" id="bkcopy">Copiar</button>
+      <button class="btn" id="bkimp">Importar</button>
+    </div>
+    <p class="status" id="bkst"></p>
+  </details>
+
+  <footer>
+    <span>Zonas y rangos de portal tomados de guías de Nintendo Life. Los nombres de las misiones aparecen en inglés porque no hay una fuente fiable de su traducción al español de España.</span>
+    <span>El Hiperespacio se divide en portales de rango 1★ a 5★. Los Pokémon alfa se marcan a mano; esta página no indica en qué especie aparecen.</span>
+  </footer>
+</div>
+
+<script>
+const ex = s => s.replace(/\{Z\}/g,'Zona Salvaje ').replace(/\{H\}/g,'Hiperespacio ');
+const parse = txt => txt.trim().split('\n').map((l,i)=>{const p=l.split('|');return {n:i+1,name:p[0],loc:ex(p[1]||'')}});
+
+const LUM = `Chikorita|Inicial. {Z}20 (postjuego)
+Bayleef|Evoluciona: Chikorita nv. 16
+Meganium|Evoluciona: Bayleef nv. 32
+Tepig|Inicial. {Z}20 (postjuego)
+Pignite|Evoluciona: Tepig nv. 17
+Emboar|Evoluciona: Pignite nv. 36
+Totodile|Inicial. {Z}20 (postjuego)
+Croconaw|Evoluciona: Totodile nv. 18
+Feraligatr|Evoluciona: Croconaw nv. 30
+Fletchling|{Z}1 y azoteas
+Fletchinder|{Z}9 y azoteas
+Talonflame|Azoteas
+Bunnelby|{Z}1 y 5
+Diggersby|{Z}17
+Scatterbug|{Z}1; azoteas con hierba
+Spewpa|{Z}4 (solo de día); azoteas con hierba
+Vivillon|{Z}13 (solo de día); azoteas
+Weedle|{Z}1; azoteas con hierba y algunos parques
+Kakuna|{Z}2 y 7 (en los árboles); colgado de árboles en parques
+Beedrill|{Z}15 (solo de día)
+Pidgey|{Z}1 y 5
+Pidgeotto|{Z}5
+Pidgeot|Azoteas
+Mareep|{Z}1
+Flaaffy|{Z}6 y 16
+Ampharos|Evoluciona: Flaaffy nv. 30
+Patrat|{Z}2 y 4 (esta, solo de noche); Alcantarillas de Luminalia (suroeste)
+Watchog|{Z}10
+Budew|{Z}2
+Roselia|{Z}7
+Roserade|{Z}20
+Magikarp|{Z}2 y 6
+Gyarados|{Z}11
+Binacle|{Z}2 y 6
+Barbaracle|{Z}16
+Staryu|{Z}2 (solo de noche) y 10
+Starmie|{Z}16 (solo de noche)
+Flabébé|Cerca de parterres de flores por toda la ciudad y en azoteas
+Floette|{Z}7
+Florges|Evoluciona: Floette con Piedra Brillante
+Skiddo|{Z}3
+Gogoat|{Z}12
+Espurr|{Z}3 y 9
+Meowstic|Evoluciona: Espurr nv. 25
+Litleo|{Z}3
+Pyroar|{Z}17
+Pancham|{Z}3
+Pangoro|Evoluciona: Pancham nv. 32 con un Pokémon de tipo Siniestro en el equipo
+Trubbish|Callejones junto a cubos de basura (mira cerca de cafeterías y restaurantes)
+Garbodor|{Z}20
+Dedenne|Azoteas, a menudo cerca de puertas de apartamentos
+Pichu|{Z}1 (en una zona pequeña a la que se llega desde el extremo izquierdo)
+Pikachu|{Z}3
+Raichu|Evoluciona: Pikachu con Piedra Trueno
+Cleffa|{Z}19; azoteas (poco frecuente, solo de noche)
+Clefairy|{Z}19 (de noche)
+Clefable|Evoluciona: Clefairy con Piedra Lunar
+Spinarak|{Z}4 (en el lateral de las criptas)
+Ariados|Alcantarillas de Luminalia (noroeste)
+Ekans|{Z}4 (solo de día); Laboratorio (final del juego)
+Arbok|{Z}10
+Abra|{Z}5; azoteas (se teletransporta enseguida)
+Kadabra|{Z}9
+Alakazam|Intercambio: Kadabra
+Gastly|{Z}4; Alcantarillas de Luminalia (sur)
+Haunter|Alcantarillas de Luminalia (sur)
+Gengar|Se captura en la historia principal; o intercambio: Haunter
+Venipede|{Z}5
+Whirlipede|{Z}15 (solo de día)
+Scolipede|{Z}15 (solo de día)
+Honedge|{Z}4 (solo de noche); Laboratorio (final del juego)
+Doublade|Laboratorio (final del juego)
+Aegislash|Evoluciona: Doublade con Piedra Noche
+Bellsprout|{Z}5 y 10
+Weepinbell|{Z}13 (solo de día)
+Victreebel|Evoluciona: Weepinbell con Piedra Hoja
+Pansage|En los árboles
+Simisage|Evoluciona: Pansage con Piedra Hoja
+Pansear|En los árboles
+Simisear|Evoluciona: Pansear con Piedra Fuego
+Panpour|En los árboles
+Simipour|Evoluciona: Panpour con Piedra Agua
+Meditite|{Z}6 (solo de día)
+Medicham|{Z}16 (solo de día)
+Electrike|{Z}5 (solo de día); Laboratorio (final del juego)
+Manectric|Laboratorio (final del juego)
+Ralts|Patios con hierba
+Kirlia|Evoluciona: Ralts nv. 20
+Gardevoir|{Z}20
+Gallade|Evoluciona: Kirlia macho con Piedra Alba
+Houndour|{Z}6; Laboratorio (final del juego)
+Houndoom|Laboratorio (final del juego)
+Swablu|{Z}6 y 18 (esta, solo de día); azoteas
+Altaria|{Z}18 (solo de día)
+Audino|{Z}7 y 19
+Spritzee|Encima de los puestos del mercado
+Aromatisse|Intercambio: Spritzee con un Saquito Fragante
+Swirlix|Encima de los puestos del mercado
+Slurpuff|Intercambio: Swirlix con un Dulce de Nata
+Eevee|{Z}19 y azoteas (poco frecuente)
+Vaporeon|Evoluciona: Eevee con Piedra Agua
+Jolteon|Evoluciona: Eevee con Piedra Trueno
+Flareon|Evoluciona: Eevee con Piedra Fuego
+Espeon|Evoluciona: Eevee con amistad alta de día
+Umbreon|Evoluciona: Eevee con amistad alta de noche
+Leafeon|Evoluciona: Eevee con Piedra Hoja
+Glaceon|Evoluciona: Eevee con Piedra Hielo
+Sylveon|Evoluciona: Eevee con amistad alta y un movimiento de tipo Hada
+Buneary|{Z}6
+Lopunny|Evoluciona: Buneary con amistad alta
+Shuppet|{Z}7 y 15; azoteas (solo de noche)
+Banette|Evoluciona: Shuppet nv. 37
+Vanillite|{Z}7 y 12
+Vanillish|Evoluciona: Vanillite nv. 35
+Vanilluxe|Evoluciona: Vanillish nv. 47
+Numel|{Z}8
+Camerupt|Evoluciona: Numel nv. 33
+Hippopotas|{Z}7 (solo de día)
+Hippowdon|{Z}20
+Drilbur|{Z}8 y 14
+Excadrill|{Z}14
+Sandile|{Z}8
+Krokorok|{Z}8
+Krookodile|Evoluciona: Krokorok nv. 40
+Machop|{Z}8 y 12
+Machoke|{Z}12
+Machamp|Intercambio: Machoke
+Gible|{Z}8 (dentro de los agujeros, poco frecuente)
+Gabite|Evoluciona: Gible nv. 24
+Garchomp|Evoluciona: Gabite nv. 48
+Carbink|{Z}9 y azoteas
+Sableye|{Z}9
+Mawile|{Z}9
+Absol|Azoteas (también en la historia principal)
+Riolu|Azoteas (solo de día y con sol)
+Lucario|{Z}20
+Slowpoke|{Z}10 y 11
+Slowbro|Evoluciona: Slowpoke nv. 27
+Slowking|Intercambio: Slowpoke con una Roca del Rey
+Carvanha|{Z}10
+Sharpedo|Evoluciona: Carvanha nv. 30
+Tynamo|{Z}10
+Eelektrik|Evoluciona: Tynamo nv. 39
+Eelektross|Evoluciona: Eelektrik con Piedra Trueno
+Dratini|Azoteas (poco frecuente)
+Dragonair|Azoteas (extremadamente poco frecuente)
+Dragonite|Evoluciona: Dragonair nv. 55
+Bulbasaur|Misión secundaria de Mable («A Call from Mable»); {Z}20
+Ivysaur|Evoluciona: Bulbasaur nv. 16
+Venusaur|Evoluciona: Ivysaur nv. 36
+Charmander|Misión secundaria de Mable («A Call from Mable»); {Z}20
+Charmeleon|Evoluciona: Charmander nv. 16
+Charizard|Evoluciona: Charmeleon nv. 36
+Squirtle|Misión secundaria de Mable («A Call from Mable»); {Z}20
+Wartortle|Evoluciona: Squirtle nv. 16
+Blastoise|Evoluciona: Wartortle nv. 36
+Stunfisk|{Z}11
+Furfrou|{Z}11 y 19
+Inkay|Alcantarillas de Luminalia (sur y noroeste)
+Malamar|{Z}20
+Skrelp|Alcantarillas de Luminalia (sur y noroeste)
+Dragalge|{Z}20; Alcantarillas de Luminalia (sur)
+Clauncher|{Z}11
+Clawitzer|Evoluciona: Clauncher nv. 37
+Goomy|Alcantarillas de Luminalia (sur); en el exterior cuando llueve
+Sliggoo|En el exterior cuando llueve (extremadamente poco frecuente)
+Goodra|Evoluciona: Sliggoo nv. 50, con lluvia
+Delibird|{Z}12 y azoteas
+Snorunt|{Z}12
+Glalie|Evoluciona: Snorunt nv. 42
+Froslass|Evoluciona: Snorunt hembra con Piedra Alba
+Snover|{Z}12
+Abomasnow|Evoluciona: Snover nv. 40
+Bergmite|{Z}12
+Avalugg|Evoluciona: Bergmite nv. 37
+Scyther|{Z}13 (solo de día)
+Scizor|Intercambio: Scyther con Revestimiento Metálico
+Pinsir|{Z}13
+Heracross|{Z}13
+Emolga|{Z}14 y azoteas
+Hawlucha|Azoteas (poco frecuente)
+Phantump|{Z}13 (solo de noche)
+Trevenant|Intercambio: Phantump
+Scraggy|Alcantarillas de Luminalia (sur)
+Scrafty|{Z}20
+Noibat|Alcantarillas de Luminalia (sur y noroeste)
+Noivern|Laboratorio (final del juego)
+Klefki|Alcantarillas de Luminalia (sur)
+Litwick|Alcantarillas de Luminalia (sur)
+Lampent|{Z}17
+Chandelure|Evoluciona: Lampent con Piedra Noche
+Aerodactyl|Restaura el Ámbar Viejo en el Laboratorio de Investigación
+Tyrunt|Restaura su fósil en el Laboratorio de Investigación
+Tyrantrum|Evoluciona: Tyrunt nv. 39 de día
+Amaura|Restaura su fósil en el Laboratorio de Investigación
+Aurorus|Evoluciona: Amaura nv. 39 de noche
+Onix|{Z}14
+Steelix|Intercambio: Onix con Revestimiento Metálico
+Aron|{Z}14
+Lairon|{Z}14
+Aggron|{Z}20
+Helioptile|{Z}14 (solo de día y con sol)
+Heliolisk|Evoluciona: Helioptile con Piedra Solar
+Pumpkaboo|{Z}15
+Gourgeist|Intercambio: Pumpkaboo
+Larvitar|{Z}15 según otras guías (la guía principal no indica localización)
+Pupitar|Evoluciona: Larvitar nv. 30
+Tyranitar|Evoluciona: Pupitar nv. 55
+Froakie|{Z}16; misión secundaria «A Challenge from Froakie»
+Frogadier|Evoluciona: Froakie nv. 16
+Greninja|Evoluciona: Frogadier nv. 36
+Falinks|{Z}16
+Chespin|{Z}17; misión secundaria «A Feisty Chespin»
+Quilladin|Evoluciona: Chespin nv. 16
+Chesnaught|Evoluciona: Quilladin nv. 36
+Skarmory|{Z}17 (nunca con lluvia)
+Fennekin|{Z}18; misión secundaria «Get Well, Fennekin»
+Braixen|Evoluciona: Fennekin nv. 16
+Delphox|Evoluciona: Braixen nv. 36
+Bagon|{Z}18
+Shelgon|Evoluciona: Bagon nv. 30
+Salamence|Evoluciona: Shelgon nv. 50
+Kangaskhan|{Z}19
+Drampa|{Z}19 (solo de día)
+Beldum|Laboratorio (final del juego)
+Metang|Laboratorio (final del juego)
+Metagross|Evoluciona: Metang nv. 45
+Xerneas|Postjuego: al final de la misión principal «The One That Gives»
+Yveltal|Postjuego: al final de la misión principal «The One That Takes»
+Zygarde|Postjuego: misión principal «To Keep the World in Balance»
+Diancie|Postjuego: misión secundaria «Shine Bright Like a Gemstone» (regalo misterioso)
+Mewtwo|Postjuego: misión secundaria «Project M» (regalo misterioso)`;
+
+const HYP = `Mankey|{H}1★
+Primeape|{H}3★
+Annihilape|Evoluciona: Primeape tras usar Puño Furia 20 veces
+Meowth|{H}2★ (forma de Galar)
+Persian|{H}4★ (formas de Kanto y de Alola)
+Perrserker|{H}4★
+Farfetch'd|{H}2★ (Kanto) y 3★ (Galar)
+Sirfetch'd|Evoluciona: Farfetch'd de Galar tras acertar 3 golpes críticos en un combate
+Cubone|{H}1★
+Marowak|{H}4★ (Kanto y Alola)
+Porygon|{H}3★
+Porygon2|Intercambio: Porygon con una Mejora
+Porygon-Z|Intercambio: Porygon2 con un Disco Extraño
+Capsakid|{H}2★
+Scovillain|{H}3★
+Tinkatink|{H}2★
+Tinkatuff|{H}3★
+Tinkaton|{H}4★
+Cyclizar|{H}4★
+Glimmet|{H}3★
+Glimmora|{H}4★
+Rotom|{H}5★
+Greavard|{H}1★
+Houndstone|{H}4★
+Sandygast|{H}1★
+Palossand|{H}4★
+Kecleon|{H}4★
+Flamigo|{H}4★
+Cryogonal|{H}3★
+Dondozo|{H}4★
+Tatsugiri|{H}4★
+Frigibax|{H}5★
+Arctibax|{H}5★
+Baxcalibur|{H}5★
+Gimmighoul|Regalo de la misión secundaria 122 «Let's Golden Goooooo!»
+Gholdengo|Evoluciona: Gimmighoul con 999 Monedas Gimmighoul
+Qwilfish|{H}2★ (Johto) y 3★ (Hisui)
+Overqwil|Evoluciona: Qwilfish de Hisui que conozca Barb Barrage
+Treecko|{H}2★
+Grovyle|{H}2★
+Sceptile|{H}2★
+Torchic|{H}2★
+Combusken|{H}3★
+Blaziken|{H}4★
+Mudkip|{H}2★
+Marshtomp|{H}3★
+Swampert|{H}4★
+Feebas|{H}2★
+Milotic|Intercambio: Feebas con una Escama Bella
+Chingling|{H}1★
+Chimecho|{H}3★
+Indeedee|{H}3★
+Purrloin|{H}1★
+Liepard|{H}3★
+Munna|{H}1★
+Musharna|{H}4★
+Throh|{H}3★
+Sawk|{H}3★
+Yamask|{H}1★ (Teselia) y 3★ (Galar)
+Cofagrigus|{H}4★
+Runerigus|Evoluciona: Yamask de Galar tras recibir 49 puntos de daño y quedarse bajo un puente
+Wimpod|{H}1★
+Golisopod|{H}3★
+Nickit|{H}1★
+Thievul|{H}3★
+Clobbopus|{H}1★
+Grapploct|{H}4★
+Mimikyu|{H}3★
+Kleavor|{H}4★
+Morpeko|{H}3★
+Golett|{H}3★
+Golurk|{H}4★
+Rookidee|{H}1★
+Corvisquire|{H}3★
+Corviknight|{H}4★
+Igglybuff|{H}2★
+Jigglypuff|{H}3★
+Wigglytuff|{H}4★
+Fidough|{H}2★
+Dachsbun|{H}3★
+Starly|{H}1★
+Staravia|{H}2★
+Staraptor|{H}4★
+Spoink|{H}1★
+Grumpig|{H}4★
+Squawkabilly|{H}1★
+Crabrawler|{H}1★
+Crabominable|{H}4★
+Nacli|{H}3★
+Naclstack|{H}3★
+Garganacl|{H}4★
+Gulpin|{H}1★
+Swalot|{H}4★
+Zubat|{H}1★
+Golbat|{H}3★
+Crobat|{H}4★
+Charcadet|{H}2★
+Armarouge|Evoluciona: Charcadet con una Armadura Auspiciosa
+Ceruledge|Evoluciona: Charcadet con una Armadura Maligna
+Maschiff|{H}1★
+Mabosstiff|{H}4★
+Toxel|{H}2★
+Toxtricity|{H}4★
+Shroodle|{H}1★
+Grafaiai|{H}3★
+Zangoose|{H}2★
+Seviper|{H}3★
+Mime Jr.|{H}1★
+Mr. Mime|{H}3★ (Kanto y Galar)
+Mr. Rime|{H}4★
+Foongus|{H}2★
+Amoonguss|{H}4★
+Heatran|Se captura durante la historia principal del DLC
+Volcanion|{H}5★
+Cobalion|{H}5★
+Terrakion|{H}5★
+Virizion|{H}5★
+Keldeo|{H}5★
+Meloetta|{H}5★
+Genesect|Misión secundaria 191 «Collecting Four Drives»
+Hoopa|Misión secundaria 196 «The Djinn Unbound»
+Marshadow|Misión secundaria 192 «The Stealthy Shadow»
+Meltan|Se captura en la misión secundaria 193 «Dreams of Meltan»
+Melmetal|Regalo en la misión secundaria 193 «Dreams of Meltan»
+Darkrai|Se captura durante la historia principal del DLC
+Latias|{H}5★
+Latios|{H}5★
+Kyogre|Tras la historia del DLC: al final de «A Sapphire-Blue Legend»
+Groudon|Tras la historia del DLC: al final de «A Ruby-Red Legend»
+Rayquaza|Al final de «The Greatest Gift», después de conseguir a Kyogre y Groudon
+Magearna|Misión secundaria 156 «Restarting Magearna»
+Zeraora|Misión secundaria «Raging Lighting» (no es necesario para completar la Pokédex)`;
+
+const DEX = {
+  L:{key:'L',label:'Luminalia',sub:'Juego base',list:parse(LUM),extra:new Set([231,232])},
+  H:{key:'H',label:'Hiperespacio',sub:'DLC Mega Dimension',list:parse(HYP),extra:new Set([132])}
+};
+for (const d of Object.values(DEX)) d.req = d.list.filter(p=>!d.extra.has(p.n)).length;
+
+const C=1,R=2,S=4,A=8, PAGE=30;
+const KEY='livingdex-z-a-v1';
+let state={L:{},H:{}};
+try{const raw=localStorage.getItem(KEY);if(raw){const o=JSON.parse(raw);if(o&&o.L&&o.H)state=o}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}};
+
+let cur='L', mode='cap';
+const page={L:0,H:0}, sel={L:1,H:1};
+const $=id=>document.getElementById(id);
+const bits=(k,n)=>state[k][n]||0;
+const pad=n=>String(n).padStart(3,'0');
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const pages=k=>Math.ceil(DEX[k].list.length/PAGE);
+
+const MODES=[['ver','Solo ver'],['cap','Capturado'],['reg','Registrado'],['shi','Shiny'],['alf','Alfa']];
+const MBIT={cap:C,reg:R,shi:S,alf:A};
+
+function buildStatic(){
+  $('modes').innerHTML='<span class="lbl">Al tocar una casilla:</span>'+MODES.map(([m,t])=>`<button class="chip" data-m="${m}" aria-pressed="${m===mode}">${t}</button>`).join('');
+  $('modes').onclick=e=>{const b=e.target.closest('[data-m]');if(!b)return;mode=b.dataset.m;
+    $('modes').querySelectorAll('[data-m]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.m===mode))};
+  $('tabs').innerHTML=Object.values(DEX).map(d=>`<button class="tab" role="tab" data-k="${d.key}" aria-selected="${d.key===cur}"><b>${d.label}</b><span class="tc"></span></button>`).join('');
+  $('tabs').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;cur=b.dataset.k;
+    $('tabs').querySelectorAll('[data-k]').forEach(x=>x.setAttribute('aria-selected',x.dataset.k===cur));
+    $('q').value='';$('results').innerHTML='';buildBox();refresh()};
+}
+
+function counts(k){
+  const d=DEX[k],o={c:0,r:0,s:0,a:0};
+  for(const p of d.list){ if(d.extra.has(p.n))continue; const b=bits(k,p.n);
+    if(b&C)o.c++; if(b&R)o.r++; if(b&S)o.s++; if(b&A)o.a++; }
+  return o;
+}
+
+function buildBox(){
+  const d=DEX[cur], p0=page[cur], start=p0*PAGE, slice=d.list.slice(start,start+PAGE);
+  $('boxtitle').textContent='Caja '+(p0+1);
+  $('boxrange').textContent=`N.º ${pad(slice[0].n)} a ${pad(slice[slice.length-1].n)} · ${slice.length} casillas`;
+  $('prev').disabled=p0===0; $('next').disabled=p0>=pages(cur)-1;
+  let h='';
+  for(let i=0;i<PAGE;i++){
+    const p=slice[i];
+    if(!p){h+='<div class="slot empty" aria-hidden="true"></div>';continue}
+    h+=`<button class="slot${d.extra.has(p.n)?' x':''}" data-n="${p.n}"><span class="no">${pad(p.n)}</span><span class="nm">${p.name}</span><span class="ind"><i class="i-c"></i><i class="i-r"></i><i class="i-s">&#10022;</i><i class="i-a">&alpha;</i></span></button>`;
+  }
+  $('grid').innerHTML=h;
+  let bx='';
+  for(let i=0;i<pages(cur);i++) bx+=`<button class="bx" data-p="${i}" aria-label="Caja ${i+1}">${i+1}</button>`;
+  $('boxes').innerHTML=bx;
+  if(sel[cur]<start+1||sel[cur]>start+slice.length) sel[cur]=slice[0].n;
+}
+
+function label(p,b){
+  const t=[]; if(b&C)t.push('capturado'); if(b&R)t.push('registrado'); if(b&S)t.push('shiny'); if(b&A)t.push('alfa');
+  return `${pad(p.n)} ${p.name}`+(t.length?': '+t.join(', '):': pendiente');
+}
+
+function refresh(){
+  const d=DEX[cur], dim=$('dim').checked;
+  $('grid').querySelectorAll('.slot[data-n]').forEach(el=>{
+    const n=+el.dataset.n, b=bits(cur,n), p=d.list[n-1];
+    el.classList.toggle('c',!!(b&C)); el.classList.toggle('r',!!(b&R));
+    el.classList.toggle('s',!!(b&S)); el.classList.toggle('a',!!(b&A));
+    el.classList.toggle('sel',n===sel[cur]); el.classList.toggle('faded',dim&&!!(b&C));
+    el.setAttribute('aria-label',label(p,b));
+  });
+  $('boxes').querySelectorAll('.bx').forEach(el=>{
+    const i=+el.dataset.p, sl=d.list.slice(i*PAGE,i*PAGE+PAGE);
+    const f=Math.round(100*sl.filter(p=>bits(cur,p.n)&C).length/sl.length);
+    el.style.setProperty('--f',f+'%');
+    el.setAttribute('aria-current',i===page[cur]);
+  });
+  for(const k of Object.keys(DEX)){
+    const c=counts(k); const tc=document.querySelector(`.tab[data-k="${k}"] .tc`);
+    tc.textContent=`${DEX[k].sub} · ${c.c}/${DEX[k].req}`;
+  }
+  const c=counts(cur), req=d.req;
+  const rows=[['','Capturados',c.c],['r','Registrados',c.r],['s','Shiny',c.s],['a','Alfa',c.a]];
+  $('stats').innerHTML=rows.map(([cl,t,v])=>`<div class="stat ${cl}"><div class="lab"><span>${t}</span><b>${v}/${req}</b></div><div class="bar"><i style="width:${Math.round(100*v/req)}%"></i></div></div>`).join('');
+  renderDetail();
+}
+
+function renderDetail(){
+  const d=DEX[cur], n=sel[cur], p=d.list[n-1], b=bits(cur,n);
+  $('detail').innerHTML=`
+    <div><div class="dno">N.º ${pad(n)} · ${d.label}</div><h2 class="dname">${p.name}</h2>${d.extra.has(n)?'<span class="tag">Extra, no necesario para completar la Pokédex</span>':''}</div>
+    <div class="where"><h3>Dónde conseguirlo</h3><p>${p.loc||'Sin datos'}</p></div>
+    <div class="toggles">
+      <label class="tg"><input type="checkbox" data-b="${C}" ${b&C?'checked':''}><span>Capturado</span></label>
+      <label class="tg"><input type="checkbox" data-b="${R}" ${b&R?'checked':''}><span>Registrado en la Pokédex</span></label>
+      <label class="tg"><input type="checkbox" data-b="${S}" ${b&S?'checked':''}><span>Shiny</span></label>
+      <label class="tg"><input type="checkbox" data-b="${A}" ${b&A?'checked':''}><span>Alfa</span></label>
+    </div>
+    <p class="hint">Al marcar «Capturado» también se marca «Registrado». Puedes desmarcarlo si solo lo has visto.</p>
+    <div class="btnrow">
+      <button class="btn pri" id="boxall">Marcar esta caja como capturada</button>
+    </div>`;
+}
+
+function setBit(k,n,bit,on){
+  let b=bits(k,n);
+  if(on){b|=bit; if(bit===C)b|=R}else b&=~bit;
+  if(b)state[k][n]=b; else delete state[k][n];
+}
+function toggleBit(k,n,bit){ setBit(k,n,bit,!(bits(k,n)&bit)); }
+
+$('grid').addEventListener('click',e=>{
+  const el=e.target.closest('.slot[data-n]'); if(!el)return;
+  const n=+el.dataset.n; sel[cur]=n;
+  if(MBIT[mode]){toggleBit(cur,n,MBIT[mode]);save()}
+  refresh();
+});
+$('detail').addEventListener('change',e=>{
+  const i=e.target.closest('input[data-b]'); if(!i)return;
+  setBit(cur,sel[cur],+i.dataset.b,i.checked); save(); refresh();
+});
+$('detail').addEventListener('click',e=>{
+  if(e.target.id!=='boxall')return;
+  const d=DEX[cur], s=page[cur]*PAGE;
+  d.list.slice(s,s+PAGE).forEach(p=>setBit(cur,p.n,C,true)); save(); refresh();
+});
+$('boxes').addEventListener('click',e=>{const b=e.target.closest('[data-p]');if(!b)return;page[cur]=+b.dataset.p;buildBox();refresh()});
+$('prev').onclick=()=>{if(page[cur]>0){page[cur]--;buildBox();refresh()}};
+$('next').onclick=()=>{if(page[cur]<pages(cur)-1){page[cur]++;buildBox();refresh()}};
+$('dim').onchange=refresh;
+
+$('q').addEventListener('input',()=>{
+  const q=norm($('q').value.trim()), out=$('results');
+  if(!q){out.innerHTML='';return}
+  const hits=DEX[cur].list.filter(p=>norm(p.name).includes(q)||String(p.n)===q.replace(/^0+/,'')||pad(p.n)===q).slice(0,14);
+  out.innerHTML=hits.length?hits.map(p=>`<button class="chip" data-n="${p.n}">${pad(p.n)} ${p.name}</button>`).join(''):'<span class="hint">Sin resultados en esta Pokédex.</span>';
+});
+$('results').addEventListener('click',e=>{
+  const b=e.target.closest('[data-n]');if(!b)return;
+  const n=+b.dataset.n; sel[cur]=n; page[cur]=Math.floor((n-1)/PAGE); buildBox(); refresh();
+  const s=$('grid').querySelector(`[data-n="${n}"]`); if(s)s.scrollIntoView({block:'nearest'});
+});
+
+/* Copia de seguridad */
+const st=t=>{$('bkst').textContent=t};
+$('bkexp').onclick=()=>{$('bk').value=JSON.stringify(state);st('Copia generada. Pulsa «Copiar» para guardarla.')};
+$('bkcopy').onclick=async()=>{
+  if(!$('bk').value)$('bk').value=JSON.stringify(state);
+  try{await navigator.clipboard.writeText($('bk').value);st('Copiado al portapapeles.')}
+  catch(e){$('bk').select();st('No se pudo copiar solo. El texto está seleccionado: cópialo con el teclado.')}
+};
+$('bkimp').onclick=()=>{
+  try{
+    const o=JSON.parse($('bk').value);
+    if(!o||typeof o.L!=='object'||typeof o.H!=='object')throw 0;
+    state={L:o.L,H:o.H};save();refresh();st('Progreso importado.');
+  }catch(e){st('El texto no es una copia válida. Pega el contenido completo y vuelve a intentarlo.')}
+};
+
+buildStatic(); buildBox(); refresh();
+</script>
+
+</body>
+</html>
